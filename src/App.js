@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import LotteryContract from './contracts/Lottery.json';
 import getWeb3 from './getWeb3';
+import Raffle from './components/Raffle';
 
 import './App.css';
 
@@ -10,8 +11,7 @@ class App extends Component {
     web3: null,
     accounts: null,
     contract: null,
-    isOwner: false,
-    seed: '',
+    owner: null,
   };
 
   componentDidMount = async () => {
@@ -30,16 +30,17 @@ class App extends Component {
         this.deployedNetwork && this.deployedNetwork.address
       );
 
-      let owner = await this.lotteryContract.methods.owner().call();
+      this.owner = await this.lotteryContract.methods.owner().call();
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
+      this.listenToAcountChange();
       this.listenToPickerWinner();
       this.setState({
         web3: this.web3,
         accounts: this.accounts,
         contract: this.lotteryContract,
-        isOwner: this.accounts[0] === owner,
+        owner: this.owner,
       });
     } catch (error) {
       // Catch any errors for any of the above operations.
@@ -50,6 +51,21 @@ class App extends Component {
     }
   };
 
+  listenToAcountChange = async () => {
+    window.ethereum.on('accountsChanged', async () => {
+      // Time to reload your interface with accounts[0]!
+      //alert('Account changed!');
+
+      // Use web3 to get the user's accounts.
+      this.accounts = await this.web3.eth.getAccounts();
+
+      this.setState({
+        accounts: this.accounts,
+      });
+      // accounts = await web3.eth.getAccounts();
+    });
+  };
+
   handleBuy = async () => {
     await this.lotteryContract.methods.buyTickets().send({
       from: this.accounts[0],
@@ -57,18 +73,11 @@ class App extends Component {
     });
   };
 
-  pickWinner = async () => {
-    await this.lotteryContract.methods.raffle(this.accounts[0]).send({
+  pickWinner = async (seed) => {
+    await this.lotteryContract.methods.raffle(seed).send({
       from: this.accounts[0],
     });
-  };
-
-  handleInputChange = (event) => {
-    const target = event.target;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
-    this.setState({
-      seed: value,
-    });
+    //console.log(seed);
   };
 
   listenToPickerWinner = () => {
@@ -84,27 +93,6 @@ class App extends Component {
     });
   };
 
-  renderRaffle() {
-    if (this.state.isOwner) {
-      return (
-        <div>
-          <h1>Lottery Owner Visible Only</h1>
-          <input
-            type="text"
-            name="seed"
-            value={this.state.seed}
-            onChange={this.handleInputChange}
-          />
-          <button type="button" onClick={this.pickWinner}>
-            Pick Winner
-          </button>
-        </div>
-      );
-    } else {
-      return <div></div>;
-    }
-  }
-
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
@@ -116,7 +104,10 @@ class App extends Component {
         <button type="button" onClick={this.handleBuy}>
           Buy ticket
         </button>
-        <div>{this.renderRaffle()}</div>
+        <Raffle
+          isOwner={this.state.owner === this.accounts[0]}
+          pickWinner={this.pickWinner}
+        />
       </div>
     );
   }
