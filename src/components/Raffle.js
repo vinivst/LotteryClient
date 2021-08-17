@@ -1,4 +1,13 @@
 import React, { Component } from 'react';
+import {
+  Container,
+  InputGroup,
+  InputGroupAddon,
+  Input,
+  Row,
+  Col,
+  Button,
+} from 'reactstrap';
 
 class Raffle extends Component {
   state = {
@@ -20,18 +29,35 @@ class Raffle extends Component {
   render() {
     if (this.props.isOwner) {
       return (
-        <div>
-          <h1>Lottery Owner Visible Only</h1>
-          <input
-            type="text"
-            name="seed"
-            value={this.state.seed}
-            onChange={this.handleInputChange}
-          />
-          <button type="button" onClick={this.pickWinner}>
-            Pick Winner
-          </button>
-        </div>
+        <Container>
+          <Row>
+            <Col>
+              <br />
+              <h1>Lottery Owner Visible Only</h1>
+              <br />
+            </Col>
+          </Row>
+          <Row>
+            <Col sm="12" md={{ size: 6, offset: 3 }}>
+              <InputGroup>
+                <InputGroupAddon addonType="prepend" className="title">
+                  Seed:
+                </InputGroupAddon>
+                <Input
+                  type="text"
+                  name="seed"
+                  value={this.state.seed}
+                  onChange={this.handleInputChange}
+                />
+                <InputGroupAddon addonType="append">
+                  <Button onClick={this.pickWinner} color="primary">
+                    Pick Winner
+                  </Button>
+                </InputGroupAddon>
+              </InputGroup>
+            </Col>
+          </Row>
+        </Container>
       );
     } else {
       return '';
